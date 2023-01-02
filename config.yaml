@@ -1,0 +1,15 @@
+kmeans_k: [2, 10] # ranged from 3 to 10
+
+path_1: data/processed/activity.csv
+path_2: data/processed/energy.csv
+path_3: data/processed/CuebiqMicro_Harvey.csv
+path_4: data/processed/Ida_homecbg_poi.csv
+path_5: data/processed/Ida_CBG_CBG.csv
+path_6: data/processed/Ida_POI_POI.csv
+
+feat_1: [activity_index_total]
+feat_2: [energy]
+feat_3: [CBG_Avg_Time(min), CBG_Avg_Distance(m), CBG_Avg_Trips, CBG_Avg_ROG(m)]
+feat_4: [count]
+feat_5: [count]
+feat_6: [count]

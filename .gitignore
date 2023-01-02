@@ -1,5 +1,3 @@
-*
-
-!.gitignore
-
-!temp.ipynb
+data/*
+logs/*
+checkpoints/*
