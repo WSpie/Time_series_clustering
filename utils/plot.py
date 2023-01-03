@@ -25,7 +25,8 @@ def plot_time_label(df, db_plot_dir):
         xtick_t = [np.round_(float(t.get_text().split()[-1]), 4) for t in plt.xticks()[1]]
         plt.xticks(xtick_pos, xtick_t, rotation=45, fontsize=8)
         plt.title(f'{db_idx} {model_name} {label}')
-        plt.xlabel('Time (Normalized)')
+        plt.xlabel('Time (Normalized)', labelpad=10)
+        plt.subplots_adjust(bottom=0.2)
         plt.ylabel('Percentage')
         plt.savefig(plot_path)
         
