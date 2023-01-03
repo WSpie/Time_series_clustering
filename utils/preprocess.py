@@ -1,6 +1,16 @@
 import os
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
+
+def time_normalization(time_series, normalize_range=(0, 1)):
+    time_series = pd.to_datetime(time_series)
+    normalized_ts = time_series.values.reshape(-1, 1)
+    scaler = MinMaxScaler(feature_range=normalize_range)
+    scaler.fit(normalized_ts)
+    normalized_ts = scaler.transform(normalized_ts)
+    normalized_ts = pd.Series(normalized_ts.flatten())
+    return normalized_ts
 
 def data_agg(folder_path):
     fps = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.csv')]

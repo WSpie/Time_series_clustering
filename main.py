@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import yaml
 from pathlib import Path
 from utils.logger import ErrLog
+from utils.plot import plot_time_label
 from tqdm import trange, tqdm
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -26,18 +27,32 @@ if __name__ == '__main__':
     parser.add_argument('--retrain', type=bool, default=False, help='retrain the model even if the results are exist')
     opt = parser.parse_args()
     
+    # load data
     config = yaml.safe_load(Path('config.yaml').read_text())
     data_path = config[f'path_{opt.db}']
     data = pd.read_csv(data_path)
-    ts_feats = config[f'feat_{opt.db}']
+    ts_feats = config[f'feat_{opt.db}'] # determine time series feature (string)
     model_name = model_selection(opt.model)
     
-    db_dir = os.path.join('checkpoints', f'db_{opt.db}')
-    if not os.path.exists(db_dir):
-        os.mkdir(db_dir)
-    model_dir = os.path.join(db_dir, model_name)
+    # make dir for each db checkpoints
+    db_cp_dir = os.path.join('checkpoints', f'db_{opt.db}')
+    if not os.path.exists(db_cp_dir):
+        os.mkdir(db_cp_dir)
+    model_dir = os.path.join(db_cp_dir, model_name)
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)
+    
+    # make dir for each db outputs
+    db_out_dir = os.path.join('outputs', f'db_{opt.db}')
+    if not os.path.exists(db_out_dir):
+        os.mkdir(db_out_dir)
+    db_model_dir = os.path.join(db_out_dir, model_name)
+    if not os.path.exists(db_model_dir):
+        os.mkdir(db_model_dir)
+    db_plot_dir = os.path.join(db_model_dir, 'plots')
+    if not os.path.exists(db_plot_dir):
+        os.mkdir(db_plot_dir)
+    
     
     print('-'*50)
     print(f'Start clustering {data_path}')
@@ -57,18 +72,22 @@ if __name__ == '__main__':
                 model = KMeans(n_clusters=n_cluster)
                 model.fit(X)
                 labels = model.predict(X)
-                s_score = silhouette_score(X, labels) # It ranges from -1 to 1, with higher values indicating better clusters.
-                print(f'{n_cluster}: {s_score}')
+                s_score = silhouette_score(X, labels)
+                # print(f'{n_cluster}: {s_score}')
                 data[f'label_{n_cluster}'] = labels
                 with open(os.path.join(model_dir, f'{model_name}_db_{opt.db}_k_{n_cluster}.pkl'), 'wb') as f:
                     pickle.dump(model, f)
                 data.to_csv(data_path, index=False)
+            print('Clustered peacefully!')
+            
+        plot_time_label(data, db_plot_dir)
+        print('Plotted successfully!')
                 
         
-        print('Clustered peacefully!')
+        
+        
     
     except:
-        print(len(ts_feats))
         print('Check error log!')
         logger.exception()
                 
