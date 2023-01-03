@@ -12,6 +12,10 @@ import pickle
 import warnings
 warnings.filterwarnings("ignore")
 
+def model_selection(model_name):
+    model_name = model_name.lower()
+    return 'kmeans'
+
 logger = ErrLog('main')
 
 if __name__ == '__main__':
@@ -26,6 +30,14 @@ if __name__ == '__main__':
     data_path = config[f'path_{opt.db}']
     data = pd.read_csv(data_path)
     ts_feats = config[f'feat_{opt.db}']
+    model_name = model_selection(opt.model)
+    
+    db_dir = os.path.join('checkpoints', f'db_{opt.db}')
+    if not os.path.exists(db_dir):
+        os.mkdir(db_dir)
+    model_dir = os.path.join(db_dir, model_name)
+    if not os.path.exists(model_dir):
+        os.mkdir(model_dir)
     
     print('-'*50)
     print(f'Start clustering {data_path}')
@@ -38,7 +50,7 @@ if __name__ == '__main__':
         if len(ts_feats) == 1:
             X = X.reshape(-1, 1)
         
-        if opt.model == 'kmeans':
+        if model_name == 'kmeans':
             k_start, k_end = config['kmeans_k']
             k_range = range(k_start, k_end+1)
             for n_cluster in tqdm(k_range, total=len(k_range)):
@@ -48,7 +60,7 @@ if __name__ == '__main__':
                 s_score = silhouette_score(X, labels) # It ranges from -1 to 1, with higher values indicating better clusters.
                 print(f'{n_cluster}: {s_score}')
                 data[f'label_{n_cluster}'] = labels
-                with open(os.path.join('checkpoints', f'{opt.model}_db_{opt.db}_k_{n_cluster}.pkl'), 'wb') as f:
+                with open(os.path.join(model_dir, f'{model_name}_db_{opt.db}_k_{n_cluster}.pkl'), 'wb') as f:
                     pickle.dump(model, f)
                 data.to_csv(data_path, index=False)
                 
