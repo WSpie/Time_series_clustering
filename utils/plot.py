@@ -5,12 +5,13 @@ import numpy as np
 from tqdm import trange
 import os
 
-def plot_time_label(df, db_plot_dir):
+def plot_time_label(df, db_plot_dir, score_dict):
     _, db_idx, model_name, _ = db_plot_dir.split('/')
     df = df.sort_values(by='time')
     labels = [x for x in df.columns if x.startswith('label_')]
     for i in trange(len(labels), desc='Plotting'):
         label = labels[i]
+        score = np.round_(score_dict[label], 4)
         plot_path = os.path.join(db_plot_dir, f'{label}.png')
         
         plt.clf()
@@ -24,7 +25,7 @@ def plot_time_label(df, db_plot_dir):
         xtick_pos = plt.xticks()[0]
         xtick_t = [np.round_(float(t.get_text().split()[-1]), 4) for t in plt.xticks()[1]]
         plt.xticks(xtick_pos, xtick_t, rotation=45, fontsize=8)
-        plt.title(f'{db_idx} {model_name} {label}')
+        plt.title(f'{db_idx} {model_name} {label} score={score}')
         plt.xlabel('Time (Normalized)', labelpad=10)
         plt.subplots_adjust(bottom=0.2)
         plt.ylabel('Percentage')
