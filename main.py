@@ -23,7 +23,6 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--model', type=str, default='kmeans')
     parser.add_argument('--db', type=int, default=1, help='index of the db')
-    parser.add_argument('--clean', type=bool, default=False, help='clean all the labels before processing')
     parser.add_argument('--retrain', type=bool, default=False, help='retrain the model even if the results are exist')
     opt = parser.parse_args()
     
@@ -59,39 +58,51 @@ if __name__ == '__main__':
     print(f'Start clustering {data_path}')
     
     try:
-        # manually clear the cached labels
-        if opt.clean:
-            data = data.loc[:, ~data.columns.str.contains('^label_')]
-        
-        # get unique time
-        time = pd.unique(data['time'])
-        
-        # get corresponding time-sensitive features
-        if len(ts_feats) == 1:
-            Xs = [data.loc[data['time']==t, ts_feats].to_numpy().reshape(-1, 1) for t in time]
+        score_path = os.path.join(db_model_dir, 'score_dict.pkl')
+        if os.path.exists(score_path) and not opt.retrain:
+            with open(score_path, 'rb') as dict_f:
+                score_dict = pickle.load(dict_f)
+            print('Loaded data from cache!')
+            
         else:
-            Xs = [data.loc[data['time']==t, ts_feats].to_numpy() for t in time]
-        
-        if model_name == 'kmeans':
-            k_start, k_end = config['kmeans_k']
-            k_range = range(k_start, k_end+1)
-            score_dict = {}
-            for n_cluster in tqdm(k_range, total=len(k_range)):
-                model = KMeans(n_clusters=n_cluster)
-                labels = []
-                scores = []
-                for X in Xs:
-                    model.fit(X)
-                    label = model.predict(X)
-                    s_score = silhouette_score(X, label)
-                    labels.extend(list(label.flatten()))
-                    scores.append(s_score)
-                score_dict[f'label_{n_cluster}'] = np.mean(scores)
-                data[f'label_{n_cluster}'] = labels
-                with open(os.path.join(model_dir, f'{model_name}_db_{opt.db}_k_{n_cluster}.pkl'), 'wb') as f:
-                    pickle.dump(model, f)
-                data.to_csv(data_path, index=False)
-            print('Clustered peacefully!')
+            # manually clear the cached labels
+            if opt.retrain:
+                data = data.loc[:, ~data.columns.str.contains('^label_')]
+            
+            # get unique time
+            time = pd.unique(data['time'])
+            
+            # get corresponding time-sensitive features
+            if len(ts_feats) == 1:
+                Xs = [data.loc[data['time']==t, ts_feats].to_numpy().reshape(-1, 1) for t in time]
+            else:
+                Xs = [data.loc[data['time']==t, ts_feats].to_numpy() for t in time]
+            
+            if model_name == 'kmeans':
+                k_start, k_end = config['kmeans_k']
+                k_range = range(k_start, k_end+1)
+                score_dict = {}
+                for n_cluster in tqdm(k_range, total=len(k_range)):
+                    # model = KMeans(n_clusters=n_cluster)
+                    labels = []
+                    scores = []
+                    for X in Xs:
+                        model = KMeans(n_clusters=n_cluster)
+                        model.fit(X)
+                        # label = model.predict(X)
+                        label = model.labels_
+                        label = label[np.argsort(label)]
+                        s_score = silhouette_score(X, label)
+                        labels.extend(list(label.flatten()))
+                        scores.append(s_score)
+                    score_dict[f'label_{n_cluster}'] = scores
+                    data[f'label_{n_cluster}'] = labels
+                    # with open(os.path.join(model_dir, f'{model_name}_db_{opt.db}_k_{n_cluster}.pkl'), 'wb') as f:
+                    #     pickle.dump(model, f)
+                    data.to_csv(data_path, index=False)
+                with open(score_path, 'wb') as dict_f:
+                    pickle.dump(score_dict, dict_f)
+                print('Clustered peacefully!')
             
         plot_time_label(data, db_plot_dir, score_dict)
         print('Plotted successfully!')

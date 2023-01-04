@@ -11,23 +11,38 @@ def plot_time_label(df, db_plot_dir, score_dict):
     labels = [x for x in df.columns if x.startswith('label_')]
     for i in trange(len(labels), desc='Plotting'):
         label = labels[i]
-        score = np.round_(score_dict[label], 4)
+        score = score_dict[label]
         plot_path = os.path.join(db_plot_dir, f'{label}.png')
         
         plt.clf()
+        fig, ax = plt.subplots()
         # Create a pivot table to calculate the percentage of each cluster at each time
         table = df.pivot_table(index='time', columns=label, aggfunc='size', fill_value=0)
         # Normalize the table by dividing each value by the sum of all values at that time
         table = table.div(table.sum(axis=1), axis=0)
         # Plot the table as a stacked bar plot
-        table.plot.bar(stacked=True)
+        table.plot.bar(stacked=True, ax=ax)
+        ax.set_ylim((0, 1))
+        
+        # Add Score plot
+        ax2 = ax.twinx()
+        ax2.autoscale(False)
+        ax2.set_ylim((-1, 1))
+        ax2.plot(score, label='Score', c='black', marker='o', linewidth=1, alpha=0.5)
+        l, lb = ax.get_legend_handles_labels()
+        l2, lb2 = ax2.get_legend_handles_labels()
+        legend = ax.legend(l + l2, lb + lb2, fontsize=8, ncol=1, handletextpad=0.1, columnspacing=0.2)
+        legend.set_zorder = 10
+        
         # Round xtick to 4 digits
         xtick_pos = plt.xticks()[0]
         xtick_t = [np.round_(float(t.get_text().split()[-1]), 4) for t in plt.xticks()[1]]
-        plt.xticks(xtick_pos, xtick_t, rotation=45, fontsize=8)
-        plt.title(f'{db_idx} {model_name} {label} score={score}')
-        plt.xlabel('Time (Normalized)', labelpad=10)
-        plt.subplots_adjust(bottom=0.2)
-        plt.ylabel('Percentage')
+        ax.set_xticks(xtick_pos, xtick_t, rotation=45, fontsize=8)
+
+        plt.title(f'{db_idx} {model_name} {label} score={np.round_(np.mean(score), 4)}')
+        ax.set_xlabel('Time (Normalized)', labelpad=10)
+        plt.subplots_adjust(bottom=0.25, right=0.85)
+        ax.set_ylabel('Percentage', fontsize=12)
+        ax2.set_ylabel('Score', fontsize=12)
         plt.savefig(plot_path)
         
