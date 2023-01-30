@@ -45,4 +45,41 @@ def plot_time_label(df, db_plot_dir, score_dict):
         ax.set_ylabel('Percentage', fontsize=12)
         ax2.set_ylabel('Score', fontsize=12)
         plt.savefig(plot_path)
-        
+
+def plot_vertical(X, label, date_range, K, db_plot_dir, desc='', combo=(0, 0)):
+    plt.clf()
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    X_min, X_max = np.min(X), np.max(X)
+    X_gap = np.abs(X_max - X_min)
+    if K == -1: # only for DBSCAN
+        unique_label = np.unique(label)
+        clusters = len(unique_label)
+        fig, axs = plt.subplots(clusters, 1, figsize=(20, 3*clusters))
+        for i in range(len(X)):
+            lab = label[i]
+            if lab != -1:
+                axs[lab].plot(X[i], c=colors[lab], alpha=0.05, linewidth=1)
+            else:
+                axs[clusters-1].plot(X[i], c='k', alpha=0.05, linewidth=1)
+        for k in range(clusters):
+            axs[k].set_ylim([X_min-0.1*X_gap, X_max+0.1*X_gap])
+            axs[k].set_xlim([0, len(date_range)-1])
+            axs[k].set_xticks([])
+        axs[-1].set_xticks(range(len(date_range)), date_range, rotation=45)
+        fig.suptitle(desc, fontsize=20)
+        plt.subplots_adjust(top=0.9)
+        plt.savefig(os.path.join(db_plot_dir, f'eps_{combo[0]}_samp_{combo[1]}.png'))
+    else:
+        fig, axs = plt.subplots(K, 1, figsize=(20, 3*K))
+        for i in range(len(X)):
+            lab = label[i]
+            axs[lab].plot(X[i], c=colors[lab], alpha=0.05, linewidth=1)
+        for k in range(K):
+            axs[k].set_ylim([X_min-0.1*X_gap, X_max+0.1*X_gap])
+            axs[k].set_xlim([0, len(date_range)-1])
+            axs[k].set_xticks([])
+        axs[-1].set_xticks(range(len(date_range)), date_range, rotation=45)
+        fig.suptitle(desc, fontsize=20)
+        plt.subplots_adjust(top=0.9)
+        plt.savefig(os.path.join(db_plot_dir, f'clusters_{K}.png'))
+    

@@ -1,15 +1,33 @@
-kmeans_k: [2, 10] # ranged from 3 to 10
+thresh: 14
+clusters: [2, 6]
+eps: [0.1, 0.15, 0.2]
+min_samples: [3, 5, 10]
 
-path_1: data/processed/activity.csv
-path_2: data/processed/energy.csv
-path_3: data/processed/CuebiqMicro_Harvey.csv
-path_4: data/processed/Ida_homecbg_poi.csv
-path_5: data/processed/Ida_CBG_CBG.csv
-path_6: data/processed/Ida_POI_POI.csv
+db_1: {'path': 'data/processed/activity.csv',
+        'loc_feats': ['census_tract'],
+        'time_feat': 'agg_day_period',
+        'target': 'activity_index_total',
+        'agg_path': 'data/processed/activity_agg.csv'}
+db_2: {'path': 'data/processed/energy.csv',
+        'loc_feats': ['zip_code'],
+        'time_feat': 'date',
+        'target': 'energy',
+        'agg_path': 'data/processed/energy_agg.csv'}
 
-feat_1: [activity_index_total]
-feat_2: [energy]
-feat_3: [CBG_Avg_Time(min), CBG_Avg_Distance(m), CBG_Avg_Trips, CBG_Avg_ROG(m)]
-feat_4: [count]
-feat_5: [count]
-feat_6: [count]
+db_3: {'path': 'data/processed/CuebiqMicro_Harvey.csv'}
+
+db_4: {'path': 'data/processed/Ida_homecbg_poi.csv',
+        'loc_feats': ['home_block_group_id', 'place_id'],
+        'time_feat': 'date',
+        'target': 'count',
+        'agg_path': 'data/processed/Ida_homecbg_poi_agg.csv'}
+
+db_5: {'path': 'data/processed/Ida_CBG_CBG.csv',
+        'loc_feats': ['begin_CBG', 'end_CBG'],
+        'time_feat': 'date',
+        'target': 'count'}
+
+db_6: {'path': 'data/processed/Ida_POI_POI.csv',
+        'loc_feats': ['begin_POI', 'end_POI'],
+        'time_feat': 'date',
+        'target': 'count'}
